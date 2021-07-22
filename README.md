@@ -108,8 +108,7 @@ public class BizPublisher implements CommandLineRunner {
 @Slf4j
 public class BizSubscribe {
     @PulsarSubscribe(topic = "${pulsar.topic.in.fail-over}", subscriptionName =
-            "pulsar-subscribe-consumer", schema = PulsarSchemaType.String,
-            containerId = "", subscriptionType = SubscriptionType.Failover)
+            "pulsar-subscribe-consumer")
     public void receive(Consumer<String> consumer, Message<String> msg) throws PulsarClientException {
     try{
         log.info("manualCommit receive String data={}", msg.getValue());
@@ -121,8 +120,7 @@ public class BizSubscribe {
     }
     
         @PulsarSubscribe(topic = "${pulsar.topic.in.fail-over}", subscriptionName =
-            "pulsar-subscribe-consumer", schema = PulsarSchemaType.String,
-            containerId = "", subscriptionType = SubscriptionType.Failover)
+            "pulsar-subscribe-consumer")
     public void receiveString(String msg) throws PulsarClientException {
         log.info("manualCommit receive String data={}", msg);
      }
