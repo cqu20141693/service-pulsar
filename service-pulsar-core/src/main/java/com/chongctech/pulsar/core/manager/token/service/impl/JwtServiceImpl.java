@@ -33,12 +33,14 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pulsar.common.util.RelativeTimeUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.ResourceLoaderAware;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.stereotype.Service;
 
 @Slf4j
 @Service
+@ConditionalOnClass(Jwts.class)
 public class JwtServiceImpl implements JwtService, ResourceLoaderAware {
 
     private ResourceLoader resourceLoader;

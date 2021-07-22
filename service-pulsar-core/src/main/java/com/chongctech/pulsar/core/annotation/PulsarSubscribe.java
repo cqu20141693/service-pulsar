@@ -28,6 +28,6 @@ public @interface PulsarSubscribe {
      */
     String containerId() default "";
 
-    SubscriptionType subscriptionType();
+    SubscriptionType subscriptionType() default SubscriptionType.Failover;
 
 }
