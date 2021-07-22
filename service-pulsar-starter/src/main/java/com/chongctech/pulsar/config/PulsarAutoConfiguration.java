@@ -8,6 +8,7 @@ import com.chongctech.pulsar.core.producer.StringProducerTemplate;
 import java.time.Duration;
 import java.util.concurrent.ThreadPoolExecutor;
 import org.apache.pulsar.client.admin.PulsarAdmin;
+import org.apache.pulsar.client.admin.internal.PulsarAdminImpl;
 import org.apache.pulsar.client.api.AuthenticationFactory;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
@@ -44,6 +45,7 @@ public class PulsarAutoConfiguration {
 
     @Bean(destroyMethod = "close")
     @ConditionalOnMissingBean
+    @ConditionalOnClass(PulsarAdminImpl.class)
     @ConditionalOnProperty(value = {"com.chongctech.service.pulsar.admin.web-service-url"})
     public PulsarAdmin pulsarAdmin(PulsarProperties properties) throws PulsarClientException {
         return PulsarAdmin.builder()

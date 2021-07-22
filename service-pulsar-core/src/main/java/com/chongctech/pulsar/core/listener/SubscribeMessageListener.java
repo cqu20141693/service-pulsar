@@ -1,6 +1,7 @@
 package com.chongctech.pulsar.core.listener;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -33,8 +34,15 @@ public class SubscribeMessageListener<T> implements MessageListener<T> {
             targetMethod.invoke(bean, consumer, msg);
         } else if (genericParameterTypes.length == 1) {
             try {
-                if (genericParameterTypes[0] instanceof Message) {
-                    targetMethod.invoke(bean, msg);
+                if (genericParameterTypes[0] instanceof ParameterizedType) {
+                    ParameterizedType genericParameterType = (ParameterizedType) genericParameterTypes[0];
+                    if (genericParameterType.getRawType() == Message.class) {
+                        targetMethod.invoke(bean, msg);
+                    } else {
+                        log.warn("pulsar subscribe bean={} targetMethod={} parameter error", bean.getClass(),
+                                targetMethod.getName());
+                        throw new RuntimeException("parameter error");
+                    }
                 } else {
                     targetMethod.invoke(bean, msg.getValue());
                 }

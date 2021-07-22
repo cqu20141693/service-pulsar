@@ -51,36 +51,7 @@ com:
           
 notes: must configuration must be configured, option means configurable
 ```
-
-1. producer
-
-``` 
-The producer recommends just using String scheam:
-
-    @Autowired
-    private StringProducerTemplate stringProducerTemplate;
-
-API:
-
-    public MessageId send(String topic, String value) 
-    public MessageId send(String topic, String key, String value) 
-    public MessageId send(ProducerRecord<String> record)
-    ......
-
-```
-
-2. consumer
-
-``` 
-The consumer recommends just using String scheam:
-
-@EnablePulsar : Use on configuration class 
-
-@PulsarSubscribe: subscribe topic to consumer message
-
-```
-
-3. java demo
+2. java demo
 
 ``` 
 @SpringBootApplication
@@ -107,18 +78,6 @@ public class BizPublisher implements CommandLineRunner {
 @Component
 @Slf4j
 public class BizSubscribe {
-
-    @PulsarSubscribe(topic = "${pulsar.topic.in.fail-over}", subscriptionName =
-            "pulsar-subscribe-consumer")
-    public void receive(Consumer<String> consumer, Message<String> msg) throws PulsarClientException {
-    try{
-        log.info("manualCommit receive String data={}", msg.getValue());
-        consumer.acknowledge(msg);
-        }  catch (Exception e) {
-            e.printStackTrace();
-            consumer.negativeAcknowledge(msg);
-        }
-    }
     
         @PulsarSubscribe(topic = "${pulsar.topic.in.fail-over}", subscriptionName =
             "pulsar-subscribe-consumer")
@@ -131,7 +90,47 @@ public class BizSubscribe {
     public void receiveMsg(Message<String> msg) throws PulsarClientException {
          log.info("manualCommit receive String data={}", msg.getValue());
      }
+     
+    @PulsarSubscribe(topic = "${pulsar.topic.in.fail-over}", subscriptionName =
+            "pulsar-subscribe-consumer")
+    public void receive(Consumer<String> consumer, Message<String> msg) throws PulsarClientException {
+    try{
+        log.info("manualCommit receive String data={}", msg.getValue());
+        consumer.acknowledge(msg);
+        }  catch (Exception e) {
+            e.printStackTrace();
+            consumer.negativeAcknowledge(msg);
+        }
+    }
+
 }
+
+```
+3. producer
+
+``` 
+The producer recommends just using String scheam:
+
+    @Autowired
+    private StringProducerTemplate stringProducerTemplate;
+
+API:
+
+    public MessageId send(String topic, String value) 
+    public MessageId send(String topic, String key, String value) 
+    public MessageId send(ProducerRecord<String> record)
+    ......
+
+```
+
+4. consumer
+
+``` 
+The consumer recommends just using String scheam:
+
+@EnablePulsar : Use on configuration class 
+
+@PulsarSubscribe: subscribe topic to consumer message
 
 ```
 

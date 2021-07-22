@@ -2,12 +2,14 @@ package com.chongctech.pulsar.core.producer;
 
 import com.chongctech.pulsar.core.container.PulsarContainer;
 import com.chongctech.pulsar.core.domain.ProducerRecord;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClientException;
+import org.apache.pulsar.client.api.TypedMessageBuilder;
 
 /**
  * @author gow
@@ -42,9 +44,10 @@ public class StringProducerTemplate {
             log.warn("producer not exist for topic={}", record.topic());
             return null;
         }
-        String key = record.key();
         String value = record.value();
-        return producer.newMessage().key(key).value(value).send();
+        TypedMessageBuilder<String> builder = producer.newMessage();
+        Optional.ofNullable(record.key()).ifPresent(builder::key);
+        return builder.value(value).send();
 
     }
 
@@ -67,9 +70,10 @@ public class StringProducerTemplate {
             log.warn("producer not exist for topic={}", record.topic());
             return null;
         }
-        String key = record.key();
         String value = record.value();
-        return producer.newMessage().deliverAfter(time, unit).key(key).value(value).send();
+        TypedMessageBuilder<String> builder = producer.newMessage();
+        Optional.ofNullable(record.key()).ifPresent(builder::key);
+        return builder.deliverAfter(time, unit).value(value).send();
     }
 
     public MessageId sendAt(String topic, String value, long timestamp) throws PulsarClientException {
@@ -90,9 +94,10 @@ public class StringProducerTemplate {
             log.warn("producer not exist for topic={}", record.topic());
             return null;
         }
-        String key = record.key();
         String value = record.value();
-        return producer.newMessage().deliverAt(timestamp).key(key).value(value).send();
+        TypedMessageBuilder<String> builder = producer.newMessage();
+        Optional.ofNullable(record.key()).ifPresent(builder::key);
+        return builder.deliverAt(timestamp).value(value).send();
 
     }
 
@@ -114,6 +119,8 @@ public class StringProducerTemplate {
             log.warn("producer not exist for topic={}", record.topic());
             return null;
         }
-        return producer.newMessage().key(record.key()).value(record.value()).sendAsync();
+        TypedMessageBuilder<String> builder = producer.newMessage();
+        Optional.ofNullable(record.key()).ifPresent(builder::key);
+        return builder.value(record.value()).sendAsync();
     }
 }
