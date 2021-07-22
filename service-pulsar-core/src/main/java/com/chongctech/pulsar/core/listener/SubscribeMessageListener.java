@@ -33,7 +33,11 @@ public class SubscribeMessageListener<T> implements MessageListener<T> {
             targetMethod.invoke(bean, consumer, msg);
         } else if (genericParameterTypes.length == 1) {
             try {
-                targetMethod.invoke(bean, msg.getValue());
+                if (genericParameterTypes[0] instanceof Message) {
+                    targetMethod.invoke(bean, msg);
+                } else {
+                    targetMethod.invoke(bean, msg.getValue());
+                }
                 consumer.acknowledge(msg);
             } catch (Exception e) {
                 consumer.negativeAcknowledge(msg);
