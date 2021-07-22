@@ -107,6 +107,7 @@ public class BizPublisher implements CommandLineRunner {
 @Component
 @Slf4j
 public class BizSubscribe {
+
     @PulsarSubscribe(topic = "${pulsar.topic.in.fail-over}", subscriptionName =
             "pulsar-subscribe-consumer")
     public void receive(Consumer<String> consumer, Message<String> msg) throws PulsarClientException {
@@ -124,7 +125,12 @@ public class BizSubscribe {
     public void receiveString(String msg) throws PulsarClientException {
         log.info("manualCommit receive String data={}", msg);
      }
-    
+     
+            @PulsarSubscribe(topic = "${pulsar.topic.in.fail-over}", subscriptionName =
+            "pulsar-subscribe-consumer")
+    public void receiveMsg(Message<String> msg) throws PulsarClientException {
+         log.info("manualCommit receive String data={}", msg.getValue());
+     }
 }
 
 ```
