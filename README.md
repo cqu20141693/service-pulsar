@@ -123,8 +123,8 @@ public class BizSubscribe {
         @PulsarSubscribe(topic = "${pulsar.topic.in.fail-over}", subscriptionName =
             "pulsar-subscribe-consumer", schema = PulsarSchemaType.String,
             containerId = "", subscriptionType = SubscriptionType.Failover)
-    public void receiveString(Stringmsg) throws PulsarClientException {
-        log.info("manualCommit receive String data={}", msg.getValue());
+    public void receiveString(String msg) throws PulsarClientException {
+        log.info("manualCommit receive String data={}", msg);
      }
     
 }
