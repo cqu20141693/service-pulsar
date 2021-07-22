@@ -1,0 +1,2 @@
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.chongctech.pulsar.config.PulsarAutoConfiguration
