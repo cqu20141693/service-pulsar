@@ -110,10 +110,22 @@ public class BizSubscribe {
     @PulsarSubscribe(topic = "${pulsar.topic.in.fail-over}", subscriptionName =
             "pulsar-subscribe-consumer", schema = PulsarSchemaType.String,
             containerId = "", subscriptionType = SubscriptionType.Failover)
-    public void receiveString(Consumer<String> consumer, Message<String> msg) throws PulsarClientException {
+    public void receive(Consumer<String> consumer, Message<String> msg) throws PulsarClientException {
+    try{
         log.info("manualCommit receive String data={}", msg.getValue());
-        consumer.acknowledge(msg.getMessageId());
+        consumer.acknowledge(msg);
+        }  catch (Exception e) {
+            e.printStackTrace();
+            consumer.negativeAcknowledge(msg);
+        }
     }
+    
+        @PulsarSubscribe(topic = "${pulsar.topic.in.fail-over}", subscriptionName =
+            "pulsar-subscribe-consumer", schema = PulsarSchemaType.String,
+            containerId = "", subscriptionType = SubscriptionType.Failover)
+    public void receiveString(Stringmsg) throws PulsarClientException {
+        log.info("manualCommit receive String data={}", msg.getValue());
+     }
     
 }
 
