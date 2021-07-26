@@ -21,8 +21,10 @@ public abstract class BaseAckStrategy implements AckStrategy {
         if (ackId == null || ackId != latestMessageId) {
             try {
                 consumer.acknowledgeCumulative(latestMessageId);
+                ackId = latestMessageId;
             } catch (PulsarClientException e) {
-                log.info("acknowledgeCumulative failed msgId={},e.msg={},e.cause={}", latestMessageId,e.getMessage(),e.getCause());
+                log.info("acknowledgeCumulative failed msgId={},e.msg={},e.cause={}", latestMessageId, e.getMessage(),
+                        e.getCause());
                 consumer.negativeAcknowledge(latestMessageId);
             }
         }
