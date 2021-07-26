@@ -1,6 +1,7 @@
 package com.chongctech.pulsar.core.container;
 
 import com.chongctech.pulsar.core.annotation.SubscribeHolder;
+import com.chongctech.pulsar.core.domain.ContainerProperties;
 import com.chongctech.pulsar.core.domain.PulsarProperties;
 import com.chongctech.pulsar.core.domain.PulsarSchemaType;
 import com.chongctech.pulsar.core.factory.PulsarFactory;
@@ -37,6 +38,7 @@ public class PulsarContainer implements DisposableBean, SmartInitializingSinglet
 
     private final PulsarClient client;
 
+    private ContainerProperties containerProperties = new ContainerProperties();
     private List<Consumer<?>> consumers = new ArrayList<>();
     private Map<String, Producer<?>> producerMap = new HashMap<>();
     private Map<String, Producer<String>> stringProducerMap = new HashMap<>();
@@ -49,6 +51,10 @@ public class PulsarContainer implements DisposableBean, SmartInitializingSinglet
 
     public Producer<?> getProducer(String topic) {
         return producerMap.get(topic);
+    }
+
+    public ContainerProperties containerProperties() {
+        return this.containerProperties;
     }
 
     public Producer<String> getStringProducer(String topic) {
@@ -69,7 +75,7 @@ public class PulsarContainer implements DisposableBean, SmartInitializingSinglet
                         properties.getConsumer());
         builder.subscriptionName(holder.getRealSubscribeName());
         builder.subscriptionType(holder.getSubscriptionType());
-        builder.messageListener(new SubscribeMessageListener<>(handlerMethod, bean));
+        builder.messageListener(new SubscribeMessageListener<>(handlerMethod, bean, containerProperties));
         try {
             Consumer<?> consumer = builder.subscribe();
             consumers.add(consumer);

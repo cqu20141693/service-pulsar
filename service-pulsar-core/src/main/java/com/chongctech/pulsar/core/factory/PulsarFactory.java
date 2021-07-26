@@ -121,6 +121,7 @@ public class PulsarFactory {
             }
             return consumerBuilder.receiverQueueSize(consumer.getReceiverQueueSize())
                     .acknowledgmentGroupTime(consumer.getAcknowledgementsGroupTimeMicros(), TimeUnit.MICROSECONDS)
+                    .enableBatchIndexAcknowledgment(consumer.isBatchIndexAcknowledgmentEnabled())
                     .negativeAckRedeliveryDelay(consumer.getNegativeAckRedeliveryDelayMicros(), TimeUnit.MICROSECONDS)
                     .maxTotalReceiverQueueSizeAcrossPartitions(consumer.getMaxTotalReceiverQueueSizeAcrossPartitions())
                     .ackTimeout(consumer.getAckTimeoutMillis(), TimeUnit.MILLISECONDS)

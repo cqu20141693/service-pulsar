@@ -132,6 +132,7 @@ public class PulsarProperties {
         private RegexSubscriptionMode regexSubscriptionMode;
         private Integer receiverQueueSize;
         private Long acknowledgementsGroupTimeMicros;
+        private boolean batchIndexAcknowledgmentEnabled = true;
         private Long negativeAckRedeliveryDelayMicros;
         private Integer maxTotalReceiverQueueSizeAcrossPartitions;
         private String consumerName;

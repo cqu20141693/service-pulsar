@@ -1,5 +1,6 @@
 package com.chongctech.pulsar.config;
 
+import com.chongctech.pulsar.core.domain.ContainerProperties;
 import com.chongctech.pulsar.core.container.PulsarContainer;
 import com.chongctech.pulsar.core.domain.PulsarProperties;
 import com.chongctech.pulsar.core.factory.PulsarFactory;
