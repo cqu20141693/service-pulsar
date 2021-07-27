@@ -4,13 +4,13 @@ import com.chongctech.pulsar.core.annotation.SubscribeHolder;
 import com.chongctech.pulsar.core.domain.ContainerProperties;
 import com.chongctech.pulsar.core.domain.PulsarProperties;
 import com.chongctech.pulsar.core.domain.PulsarSchemaType;
+import com.chongctech.pulsar.core.event.PulsarContainerStopEvent;
 import com.chongctech.pulsar.core.factory.PulsarFactory;
 import com.chongctech.pulsar.core.listener.SubscribeMessageListener;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.ConsumerBuilder;
@@ -19,8 +19,10 @@ import org.apache.pulsar.client.api.ProducerBuilder;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
-import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.SmartInitializingSingleton;
+import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.ApplicationEventPublisherAware;
+import org.springframework.context.SmartLifecycle;
 
 /**
  * @author gow
@@ -30,7 +32,7 @@ import org.springframework.beans.factory.SmartInitializingSingleton;
  * At the same time, it needs to be able to provide custom producer and consumer attributes
  */
 @Slf4j
-public class PulsarContainer implements DisposableBean, SmartInitializingSingleton {
+public class PulsarContainer implements SmartInitializingSingleton, SmartLifecycle, ApplicationEventPublisherAware {
 
     private final PulsarProperties properties;
 
@@ -38,8 +40,11 @@ public class PulsarContainer implements DisposableBean, SmartInitializingSinglet
 
     private final PulsarClient client;
 
+    private final AtomicBoolean running = new AtomicBoolean(false);
+    private ApplicationEventPublisher applicationEventPublisher;
+
     private ContainerProperties containerProperties = new ContainerProperties();
-    private List<Consumer<?>> consumers = new ArrayList<>();
+    private Map<Consumer<?>, SubscribeMessageListener> consumers = new HashMap<>();
     private Map<String, Producer<?>> producerMap = new HashMap<>();
     private Map<String, Producer<String>> stringProducerMap = new HashMap<>();
 
@@ -65,6 +70,9 @@ public class PulsarContainer implements DisposableBean, SmartInitializingSinglet
         return stringProducerMap.get(topic);
     }
 
+    public Map<String, Producer<?>> getProducerMap() {
+        return producerMap;
+    }
 
     public <T> void addConsumer(SubscribeHolder holder,
                                 Method handlerMethod, Object bean) {
@@ -75,10 +83,13 @@ public class PulsarContainer implements DisposableBean, SmartInitializingSinglet
                         properties.getConsumer());
         builder.subscriptionName(holder.getRealSubscribeName());
         builder.subscriptionType(holder.getSubscriptionType());
-        builder.messageListener(new SubscribeMessageListener<>(handlerMethod, bean, containerProperties));
+
+        SubscribeMessageListener messageListener =
+                new SubscribeMessageListener<>(handlerMethod, bean, containerProperties);
+        builder.messageListener(messageListener);
         try {
             Consumer<?> consumer = builder.subscribe();
-            consumers.add(consumer);
+            consumers.put(consumer, messageListener);
         } catch (PulsarClientException e) {
             e.printStackTrace();
             log.warn("subscribe failed, topic={},subscriptionName={},subscriptionType={}", holder.getTopic(),
@@ -137,7 +148,40 @@ public class PulsarContainer implements DisposableBean, SmartInitializingSinglet
     }
 
     @Override
-    public void destroy() throws Exception {
-        client.close();
+    public void start() {
+        if (this.running.compareAndSet(false, true)) {
+            log.debug("container start,monitor can start");
+        } else {
+            log.info("container started !");
+        }
+
+    }
+
+    @Override
+    public void stop() {
+        if (this.running.compareAndSet(true, false)) {
+            log.info("container stopping ");
+            consumers.forEach((consumer, listener) -> {
+                listener.stop();
+                consumer.closeAsync();
+            });
+            applicationEventPublisher.publishEvent(new PulsarContainerStopEvent(this));
+        }
+    }
+
+    @Override
+    public void stop(Runnable callback) {
+        this.stop();
+        callback.run();
+    }
+
+    @Override
+    public boolean isRunning() {
+        return this.running.get();
+    }
+
+    @Override
+    public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+        this.applicationEventPublisher = applicationEventPublisher;
     }
 }

@@ -26,6 +26,7 @@ public class SubscribeMessageListener<T> implements MessageListener<T> {
     private Object bean;
     private final AckStrategy ackStrategy;
     private AtomicBoolean consumerSet = new AtomicBoolean(false);
+    private AtomicBoolean closed = new AtomicBoolean(false);
 
     public SubscribeMessageListener(Method targetMethod, Object bean,
                                     ContainerProperties containerProperties) {
@@ -42,28 +43,32 @@ public class SubscribeMessageListener<T> implements MessageListener<T> {
     @SneakyThrows
     @Override
     public void received(Consumer<T> consumer, Message<T> msg) {
-        consumerInit(consumer);
-        ackStrategy.processCommits(msg.getMessageId());
-        Type[] genericParameterTypes = targetMethod.getGenericParameterTypes();
-        targetMethod.setAccessible(true);
-        if (genericParameterTypes.length == 2) {
-            targetMethod.invoke(bean, consumer, msg);
-        } else if (genericParameterTypes.length == 1) {
+        if (!closed.get()) {
+            consumerInit(consumer);
+            ackStrategy.processCommits(msg.getMessageId());
+            Type[] genericParameterTypes = targetMethod.getGenericParameterTypes();
+            targetMethod.setAccessible(true);
+            if (genericParameterTypes.length == 2) {
+                targetMethod.invoke(bean, consumer, msg);
+            } else if (genericParameterTypes.length == 1) {
 
-            if (genericParameterTypes[0] instanceof ParameterizedType) {
-                ParameterizedType genericParameterType = (ParameterizedType) genericParameterTypes[0];
-                if (genericParameterType.getRawType() == Message.class) {
-                    targetMethod.invoke(bean, msg);
+                if (genericParameterTypes[0] instanceof ParameterizedType) {
+                    ParameterizedType genericParameterType = (ParameterizedType) genericParameterTypes[0];
+                    if (genericParameterType.getRawType() == Message.class) {
+                        targetMethod.invoke(bean, msg);
+                    } else {
+                        log.warn("pulsar subscribe bean={} targetMethod={} parameter error", bean.getClass(),
+                                targetMethod.getName());
+                        throw new RuntimeException("parameter error");
+                    }
                 } else {
-                    log.warn("pulsar subscribe bean={} targetMethod={} parameter error", bean.getClass(),
-                            targetMethod.getName());
-                    throw new RuntimeException("parameter error");
+                    targetMethod.invoke(bean, msg.getValue());
                 }
             } else {
-                targetMethod.invoke(bean, msg.getValue());
+                log.error("bean={} targetMethod={} parameter error", bean.getClass(), targetMethod.getName());
             }
         } else {
-            log.error("bean={} targetMethod={} parameter error", bean.getClass(), targetMethod.getName());
+            log.debug("SubscribeMessageListener is closed, consumer will ignore msg");
         }
     }
 
@@ -73,4 +78,8 @@ public class SubscribeMessageListener<T> implements MessageListener<T> {
         }
     }
 
+    public void stop() {
+        closed.compareAndSet(false, true);
+        ackStrategy.finalCommit();
+    }
 }

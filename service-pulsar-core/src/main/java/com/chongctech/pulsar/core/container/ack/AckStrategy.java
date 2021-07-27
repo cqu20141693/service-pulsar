@@ -11,4 +11,9 @@ public interface AckStrategy {
     void processCommits(MessageId messageId);
 
     void setConsumer(Consumer<?> consumer);
+
+    /**
+     * The final submission when the listener stop
+     */
+    void finalCommit();
 }

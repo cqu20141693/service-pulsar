@@ -18,7 +18,7 @@ public abstract class BaseAckStrategy implements AckStrategy {
 
     public void commitCumulative() {
         assert consumer != null : "consumer not init";
-        if (ackId == null || ackId != latestMessageId) {
+        if ((ackId == null || ackId != latestMessageId) && consumer.isConnected()) {
             try {
                 consumer.acknowledgeCumulative(latestMessageId);
                 ackId = latestMessageId;
@@ -29,19 +29,22 @@ public abstract class BaseAckStrategy implements AckStrategy {
             }
         }
     }
+
     public void commitIndividual() {
         assert consumer != null : "consumer not init";
-        if (ackId == null || ackId != latestMessageId) {
-            try {
-                consumer.acknowledgeCumulative(latestMessageId);
-                ackId = latestMessageId;
-            } catch (PulsarClientException e) {
-                log.info("acknowledgeCumulative failed msgId={},e.msg={},e.cause={}", latestMessageId, e.getMessage(),
-                        e.getCause());
-                consumer.negativeAcknowledge(latestMessageId);
+
+        try {
+            if (consumer.isConnected()) {
+                consumer.acknowledge(latestMessageId);
             }
+        } catch (PulsarClientException e) {
+            log.info("commitIndividual failed msgId={},e.msg={},e.cause={}", latestMessageId, e.getMessage(),
+                    e.getCause());
+            consumer.negativeAcknowledge(latestMessageId);
         }
+
     }
+
     @Override
     public void setConsumer(Consumer<?> consumer) {
         this.consumer = consumer;

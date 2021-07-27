@@ -14,6 +14,11 @@ public class DefaultAckStrategy extends BaseAckStrategy {
     }
 
     @Override
+    public void finalCommit() {
+
+    }
+
+    @Override
     void updateMessageId(MessageId messageId) {
         this.latestMessageId = messageId;
     }

@@ -2,6 +2,7 @@ package com.chongctech.pulsar.core.container.ack;
 
 import com.chongctech.pulsar.core.domain.ContainerProperties;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -17,6 +18,7 @@ public class AckCountTimeStrategy extends BaseAckStrategy {
     private int count = 0;
     private final AtomicBoolean started = new AtomicBoolean(false);
     private final ScheduledExecutorService executorService = new ScheduledThreadPoolExecutor(1);
+    private ScheduledFuture<?> scheduledFuture;
 
     public AckCountTimeStrategy(ContainerProperties containerProperties) {
         this.containerProperties = containerProperties;
@@ -36,11 +38,18 @@ public class AckCountTimeStrategy extends BaseAckStrategy {
         startTimeAck();
     }
 
+    @Override
+    public void finalCommit() {
+        commitCumulative();
+        scheduledFuture.cancel(true);
+
+    }
+
     private void startTimeAck() {
         if (started.compareAndSet(false, true)) {
             long ackTimeMills = containerProperties.getAckTimeMills();
             // 每隔一定时间ack messageId
-            executorService
+            scheduledFuture = executorService
                     .scheduleWithFixedDelay(this::commitCumulative, ackTimeMills, ackTimeMills, TimeUnit.MILLISECONDS);
         }
     }

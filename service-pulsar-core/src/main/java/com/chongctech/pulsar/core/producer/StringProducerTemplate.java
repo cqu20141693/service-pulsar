@@ -10,13 +10,14 @@ import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.TypedMessageBuilder;
+import org.springframework.beans.factory.DisposableBean;
 
 /**
  * @author gow
  * @date 2021/7/20
  */
 @Slf4j
-public class StringProducerTemplate {
+public class StringProducerTemplate implements DisposableBean {
 
     private PulsarContainer container;
 
@@ -39,9 +40,8 @@ public class StringProducerTemplate {
 
     public MessageId send(ProducerRecord<String> record) throws PulsarClientException {
 
-        Producer<String> producer = container.getStringProducer(record.topic());
+        Producer<String> producer = getProducer(record);
         if (producer == null) {
-            log.warn("producer not exist for topic={}", record.topic());
             return null;
         }
         String value = record.value();
@@ -49,6 +49,19 @@ public class StringProducerTemplate {
         Optional.ofNullable(record.key()).ifPresent(builder::key);
         return builder.value(value).send();
 
+    }
+
+    private Producer<String> getProducer(ProducerRecord<String> record) {
+        Producer<String> producer = container.getStringProducer(record.topic());
+        if (producer == null) {
+            log.warn("producer not exist for topic={}", record.topic());
+            return null;
+        }
+        if (!producer.isConnected()) {
+            log.warn("producer is disconnected topic={}", record.topic());
+            return null;
+        }
+        return producer;
     }
 
     public MessageId sendAfter(String topic, String value, long time, TimeUnit unit) throws PulsarClientException {
@@ -65,9 +78,8 @@ public class StringProducerTemplate {
 
     public MessageId sendAfter(ProducerRecord<String> record, long time, TimeUnit unit) throws PulsarClientException {
 
-        Producer<String> producer = container.getStringProducer(record.topic());
+        Producer<String> producer = getProducer(record);
         if (producer == null) {
-            log.warn("producer not exist for topic={}", record.topic());
             return null;
         }
         String value = record.value();
@@ -89,9 +101,8 @@ public class StringProducerTemplate {
 
     public MessageId sendAt(ProducerRecord<String> record, long timestamp) throws PulsarClientException {
 
-        Producer<String> producer = container.getStringProducer(record.topic());
+        Producer<String> producer = getProducer(record);
         if (producer == null) {
-            log.warn("producer not exist for topic={}", record.topic());
             return null;
         }
         String value = record.value();
@@ -114,13 +125,19 @@ public class StringProducerTemplate {
     }
 
     public CompletableFuture<MessageId> sendAsync(ProducerRecord<String> record) {
-        Producer<String> producer = container.getStringProducer(record.topic());
+        Producer<String> producer = getProducer(record);
         if (producer == null) {
-            log.warn("producer not exist for topic={}", record.topic());
             return null;
         }
         TypedMessageBuilder<String> builder = producer.newMessage();
         Optional.ofNullable(record.key()).ifPresent(builder::key);
         return builder.value(record.value()).sendAsync();
+    }
+
+    @Override
+    public void destroy() throws Exception {
+        container.getProducerMap().forEach((s, producer) -> {
+            producer.closeAsync();
+        });
     }
 }
