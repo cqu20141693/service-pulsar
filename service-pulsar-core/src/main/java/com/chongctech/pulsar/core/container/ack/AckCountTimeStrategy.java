@@ -30,7 +30,7 @@ public class AckCountTimeStrategy extends BaseAckStrategy {
         this.count++;
         boolean countExceeded = this.count >= this.containerProperties.getAckCount();
         if (countExceeded) {
-            commit();
+            commitCumulative();
             count = 0;
         }
         startTimeAck();
@@ -41,7 +41,7 @@ public class AckCountTimeStrategy extends BaseAckStrategy {
             long ackTimeMills = containerProperties.getAckTimeMills();
             // 每隔一定时间ack messageId
             executorService
-                    .scheduleWithFixedDelay(this::commit, ackTimeMills, ackTimeMills, TimeUnit.MILLISECONDS);
+                    .scheduleWithFixedDelay(this::commitCumulative, ackTimeMills, ackTimeMills, TimeUnit.MILLISECONDS);
         }
     }
 

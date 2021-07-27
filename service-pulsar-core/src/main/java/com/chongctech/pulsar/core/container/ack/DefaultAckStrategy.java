@@ -10,7 +10,7 @@ public class DefaultAckStrategy extends BaseAckStrategy {
     @Override
     public void processCommits(MessageId messageId) {
         updateMessageId(messageId);
-        commit();
+        commitIndividual();
     }
 
     @Override
