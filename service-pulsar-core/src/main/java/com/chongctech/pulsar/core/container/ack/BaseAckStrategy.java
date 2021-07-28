@@ -1,6 +1,6 @@
 package com.chongctech.pulsar.core.container.ack;
 
-import lombok.extern.slf4j.Slf4j;
+import com.chongctech.pulsar.core.log.PulsarLog;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.PulsarClientException;
@@ -9,7 +9,6 @@ import org.apache.pulsar.client.api.PulsarClientException;
  * @author gow
  * @date 2021/7/26
  */
-@Slf4j
 public abstract class BaseAckStrategy implements AckStrategy {
 
     protected Consumer<?> consumer;
@@ -18,14 +17,21 @@ public abstract class BaseAckStrategy implements AckStrategy {
 
     public void commitCumulative() {
         assert consumer != null : "consumer not init";
-        if ((ackId == null || ackId != latestMessageId) && consumer.isConnected()) {
+        if (latestMessageId != null && (ackId == null || ackId != latestMessageId) && consumer.isConnected()) {
             try {
                 consumer.acknowledgeCumulative(latestMessageId);
                 ackId = latestMessageId;
             } catch (PulsarClientException e) {
-                log.info("acknowledgeCumulative failed msgId={},e.msg={},e.cause={}", latestMessageId, e.getMessage(),
+                PulsarLog.log.info("acknowledgeCumulative failed msgId={},e.msg={},e.cause={}", latestMessageId,
+                        e.getMessage(),
                         e.getCause());
                 consumer.negativeAcknowledge(latestMessageId);
+            }
+        } else {
+            if (latestMessageId == null) {
+                PulsarLog.log.debug("commitCumulative condition failed, msgId=null");
+            } else if (!consumer.isConnected()) {
+                PulsarLog.log.debug("commitCumulative condition failed, consumer disconnected");
             }
         }
     }
@@ -38,7 +44,7 @@ public abstract class BaseAckStrategy implements AckStrategy {
                 consumer.acknowledge(latestMessageId);
             }
         } catch (PulsarClientException e) {
-            log.info("commitIndividual failed msgId={},e.msg={},e.cause={}", latestMessageId, e.getMessage(),
+            PulsarLog.log.info("commitIndividual failed msgId={},e.msg={},e.cause={}", latestMessageId, e.getMessage(),
                     e.getCause());
             consumer.negativeAcknowledge(latestMessageId);
         }

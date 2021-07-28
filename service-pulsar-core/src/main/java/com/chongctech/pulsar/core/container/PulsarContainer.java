@@ -1,12 +1,17 @@
 package com.chongctech.pulsar.core.container;
 
 import com.chongctech.pulsar.core.annotation.SubscribeHolder;
+import com.chongctech.pulsar.core.container.ack.AckCountTimeStrategy;
+import com.chongctech.pulsar.core.container.ack.AckMode;
+import com.chongctech.pulsar.core.container.ack.AckStrategy;
+import com.chongctech.pulsar.core.container.ack.DefaultAckStrategy;
 import com.chongctech.pulsar.core.domain.ContainerProperties;
 import com.chongctech.pulsar.core.domain.PulsarProperties;
 import com.chongctech.pulsar.core.domain.PulsarSchemaType;
 import com.chongctech.pulsar.core.event.PulsarContainerStopEvent;
 import com.chongctech.pulsar.core.factory.PulsarFactory;
 import com.chongctech.pulsar.core.listener.SubscribeMessageListener;
+import com.chongctech.pulsar.core.log.PulsarLog;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -83,17 +88,27 @@ public class PulsarContainer implements SmartInitializingSingleton, SmartLifecyc
                         properties.getConsumer());
         builder.subscriptionName(holder.getRealSubscribeName());
         builder.subscriptionType(holder.getSubscriptionType());
-
+        AckStrategy ackStrategy = getAckStrategy();
         SubscribeMessageListener messageListener =
-                new SubscribeMessageListener<>(handlerMethod, bean, containerProperties);
+                new SubscribeMessageListener<>(handlerMethod, bean, ackStrategy);
         builder.messageListener(messageListener);
         try {
             Consumer<?> consumer = builder.subscribe();
+            ackStrategy.setConsumer(consumer);
             consumers.put(consumer, messageListener);
         } catch (PulsarClientException e) {
             e.printStackTrace();
             log.warn("subscribe failed, topic={},subscriptionName={},subscriptionType={}", holder.getTopic(),
                     holder.getRealSubscribeName(), holder.getSubscriptionType());
+        }
+    }
+
+    private AckStrategy getAckStrategy() {
+        AckMode ackMode = containerProperties.getAckMode();
+        if (ackMode == AckMode.COUNT_TIME) {
+            return new AckCountTimeStrategy(containerProperties);
+        } else {
+            return new DefaultAckStrategy();
         }
     }
 

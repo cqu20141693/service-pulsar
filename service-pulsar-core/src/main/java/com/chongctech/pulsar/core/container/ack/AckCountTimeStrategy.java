@@ -1,6 +1,7 @@
 package com.chongctech.pulsar.core.container.ack;
 
 import com.chongctech.pulsar.core.domain.ContainerProperties;
+import com.chongctech.pulsar.core.log.PulsarLog;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
@@ -40,9 +41,13 @@ public class AckCountTimeStrategy extends BaseAckStrategy {
 
     @Override
     public void finalCommit() {
-        commitCumulative();
-        scheduledFuture.cancel(true);
-
+        if (started.compareAndSet(true, false)) {
+            commitCumulative();
+            scheduledFuture.cancel(true);
+            executorService.shutdown();
+        } else {
+            PulsarLog.log.debug("not started or final commit has been called ");
+        }
     }
 
     private void startTimeAck() {
