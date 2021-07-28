@@ -11,7 +11,6 @@ import com.chongctech.pulsar.core.domain.PulsarSchemaType;
 import com.chongctech.pulsar.core.event.PulsarContainerStopEvent;
 import com.chongctech.pulsar.core.factory.PulsarFactory;
 import com.chongctech.pulsar.core.listener.SubscribeMessageListener;
-import com.chongctech.pulsar.core.log.PulsarLog;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
