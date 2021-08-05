@@ -1,7 +1,8 @@
 package com.chongctech.pulsar.config;
 
-import com.chongctech.pulsar.core.domain.ContainerProperties;
 import com.chongctech.pulsar.core.container.PulsarContainer;
+import com.chongctech.pulsar.core.container.ack.AckMode;
+import com.chongctech.pulsar.core.domain.ContainerProperties;
 import com.chongctech.pulsar.core.domain.PulsarProperties;
 import com.chongctech.pulsar.core.factory.PulsarFactory;
 import com.chongctech.pulsar.core.producer.ProducerTemplate;
@@ -60,6 +61,16 @@ public class PulsarAutoConfiguration {
                                            PulsarClient client) {
         return new PulsarContainer(properties, pulsarFactory, client);
     }
+
+    @Bean("individualContainer")
+    public PulsarContainer individualContainer(PulsarProperties properties, PulsarFactory pulsarFactory,
+                                           PulsarClient client) {
+        PulsarContainer pulsarContainer = new PulsarContainer(properties, pulsarFactory, client);
+        ContainerProperties containerProperties = pulsarContainer.containerProperties();
+        containerProperties.setAckMode(AckMode.MANUAL_IMMEDIATE);
+        return pulsarContainer;
+    }
+
 
     @Bean("producerTemplate")
     public ProducerTemplate producerTemplate(@Qualifier("pulsarContainer") PulsarContainer container) {

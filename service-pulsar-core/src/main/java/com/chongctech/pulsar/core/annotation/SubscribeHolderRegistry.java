@@ -3,6 +3,7 @@ package com.chongctech.pulsar.core.annotation;
 import com.chongctech.pulsar.core.container.PulsarContainer;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.pulsar.client.api.SubscriptionType;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Component;
 public class SubscribeHolderRegistry implements ApplicationContextAware, BeanFactoryAware {
 
     private final String DEFAULT_CONTAINER = "pulsarContainer";
+    private final String DEFAULT_INDIVIDUAL_CONTAINER = "individualContainer";
     private ApplicationContext applicationContext;
 
     private BeanFactory beanFactory;
@@ -36,8 +38,17 @@ public class SubscribeHolderRegistry implements ApplicationContextAware, BeanFac
 
     public void registerSubscribeContainer(SubscribeHolder holder) {
         String containerId = holder.getContainerId();
+        SubscriptionType subscriptionType = holder.getSubscriptionType();
         if (StringUtils.isEmpty(containerId)) {
-            containerId = DEFAULT_CONTAINER;
+            switch (subscriptionType) {
+                case Failover:
+                case Exclusive:
+                    containerId = DEFAULT_CONTAINER;
+                    break;
+                case Shared:
+                case Key_Shared:
+                    containerId = DEFAULT_INDIVIDUAL_CONTAINER;
+            }
         }
         try {
             PulsarContainer container = beanFactory.getBean(containerId, PulsarContainer.class);
