@@ -11,12 +11,13 @@ import org.springframework.aop.support.AopUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.BeanFactoryAware;
-import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.config.BeanExpressionContext;
 import org.springframework.beans.factory.config.BeanExpressionResolver;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.ApplicationListener;
 import org.springframework.context.expression.StandardBeanExpressionResolver;
 import org.springframework.core.MethodIntrospector;
 import org.springframework.core.Ordered;
@@ -25,7 +26,7 @@ import org.springframework.util.StringUtils;
 
 @Slf4j
 public class PulsarSubscribeAnnotationPostProcessor
-        implements BeanPostProcessor, Ordered, BeanFactoryAware, SmartInitializingSingleton {
+        implements BeanPostProcessor, Ordered, BeanFactoryAware, ApplicationListener<ApplicationReadyEvent> {
 
     private BeanFactory beanFactory;
     private final Set<Class<?>> nonAnnotatedClasses = Collections.newSetFromMap(new ConcurrentHashMap(64));
@@ -43,7 +44,7 @@ public class PulsarSubscribeAnnotationPostProcessor
     }
 
     @Override
-    public void afterSingletonsInstantiated() {
+    public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
         SubscribeHolderRegistry holderRegistry = this.beanFactory.getBean(SubscribeHolderRegistry.class);
         registrar.setSubscribeHolderRegistry(holderRegistry);
         registrar.registerAllHolders();
