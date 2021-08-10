@@ -1,5 +1,6 @@
 package com.chongctech.pulsar.core.annotation;
 
+import com.chongctech.pulsar.core.utils.SubscribeNameGenerator;
 import java.lang.reflect.Method;
 import java.util.Collections;
 import java.util.HashSet;
@@ -18,21 +19,30 @@ import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.EnvironmentAware;
 import org.springframework.context.expression.StandardBeanExpressionResolver;
 import org.springframework.core.MethodIntrospector;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.core.env.Environment;
 import org.springframework.util.StringUtils;
 
 @Slf4j
 public class PulsarSubscribeAnnotationPostProcessor
-        implements BeanPostProcessor, Ordered, BeanFactoryAware, ApplicationListener<ApplicationReadyEvent> {
+        implements BeanPostProcessor, Ordered, BeanFactoryAware, ApplicationListener<ApplicationReadyEvent>,
+        EnvironmentAware {
 
+    private Environment environment;
     private BeanFactory beanFactory;
     private final Set<Class<?>> nonAnnotatedClasses = Collections.newSetFromMap(new ConcurrentHashMap(64));
     private BeanExpressionResolver resolver = new StandardBeanExpressionResolver();
     private BeanExpressionContext expressionContext;
     private SubscribeHolderRegistrar registrar = new SubscribeHolderRegistrar();
+
+    @Override
+    public void setEnvironment(Environment environment) {
+        this.environment = environment;
+    }
 
     @Override
     public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
@@ -62,12 +72,24 @@ public class PulsarSubscribeAnnotationPostProcessor
 
     private void processPulsarSubscribe(PulsarSubscribe subscribe, Method method, Object bean, String beanName) {
         String realName = subscribe.subscriptionName();
-        if (StringUtils.hasText(realName)) {
+        SubscribeNameGenerator generator = SubscribeNameGenerator.parseFromCode(realName);
+        if (generator != SubscribeNameGenerator.UNKNOWN) {
+            // ip
+            String name = generator.getName();
+
+            String appName = environment.getProperty("spring.application.name");
+            if (appName == null) {
+                realName = name;
+            } else {
+                realName = appName + "-" + name;
+            }
+        } else if (StringUtils.hasText(realName)) {
             Object resolvedName = this.resolveExpression(realName);
             if (resolvedName instanceof String) {
                 realName = (String) resolvedName;
             }
         }
+
         String realTopic = subscribe.topic();
         if (StringUtils.hasText(realTopic)) {
             Object resolvedTopic = this.resolveExpression(realTopic);
