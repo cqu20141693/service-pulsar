@@ -220,9 +220,9 @@ public class PulsarProperties {
             this.messageRoutingMode = MessageRoutingMode.RoundRobinPartition;
             this.hashingScheme = HashingScheme.JavaStringHash;
             this.cryptoFailureAction = ProducerCryptoFailureAction.FAIL;
-            this.batchingMaxPublishDelayMicros = TimeUnit.MILLISECONDS.toMicros(1L);
+            this.batchingMaxPublishDelayMicros = TimeUnit.MILLISECONDS.toMicros(100L);
             this.batchingMaxMessages = 1000;
-            this.batchingEnabled = false;
+            this.batchingEnabled = true;
             this.batcherBuilder = BatcherBuilder.DEFAULT;
             this.compressionType = CompressionType.NONE;
             this.batchMaxBytes = 83886080;
