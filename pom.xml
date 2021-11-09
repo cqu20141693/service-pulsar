@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.chongctech</groupId>
+  <groupId>com.gow</groupId>
   <artifactId>service-pulsar</artifactId>
   <packaging>pom</packaging>
   <version>${revision}</version>
@@ -21,45 +21,6 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
-  <distributionManagement>
-    <repository>
-      <id>chongCtech-release</id>
-      <name>Release</name>
-      <url>http://172.30.203.20:8081/repository/maven-releases/</url>
-    </repository>
-    <snapshotRepository>
-      <id>chongCtech-snapshot</id>
-      <name>Nexus Snapshot Repository</name>
-      <url>http://172.30.203.20:8081/repository/maven-snapshots/</url>
-    </snapshotRepository>
-  </distributionManagement>
-
-  <repositories>
-    <repository>
-      <releases>
-        <enabled>true</enabled>
-      </releases>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-      <id>chongCtech-release</id>
-      <name>Release</name>
-      <url>http://172.30.203.20:8081/repository/maven-releases/</url>
-    </repository>
-    <repository>
-      <releases>
-        <enabled>false</enabled>
-      </releases>
-      <snapshots>
-        <enabled>true</enabled>
-        <updatePolicy>always</updatePolicy>
-        <checksumPolicy>warn</checksumPolicy>
-      </snapshots>
-      <id>chongCtech-snapshot</id>
-      <name>Nexus Snapshot Repository</name>
-      <url>http://172.30.203.20:8081/repository/maven-snapshots/</url>
-    </repository>
-  </repositories>
 
   <build>
     <plugins>

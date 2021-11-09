@@ -12,13 +12,13 @@ puslsar starter provides simple use of pulsar for production and consumption dat
 
 ```
     <dependency>
-      <groupId>com.chongctech</groupId>
+      <groupId>com.gow</groupId>
       <artifactId>service-pulsar-starter</artifactId>
       <version>v1.0.0-SNAPSHOT</version>
     </dependency>
 
 com:
-  chongctech:
+  gow:
     service:
       pulsar:
         # must
