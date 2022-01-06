@@ -16,6 +16,7 @@ import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Reader;
 import org.apache.pulsar.client.api.ReaderBuilder;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.api.SizeUnit;
 
 /**
  * @author gow
@@ -40,7 +41,10 @@ public class PulsarFactory {
                 builder.authentication(AuthenticationFactory.token(t));
             });
             builder.ioThreads(properties.getNumIoThreads());
-            builder.listenerThreads(properties.getNumListenerThreads());
+            builder.listenerThreads(properties.getNumListenerThreads())
+            .memoryLimit(properties.getMemoryLimit(), SizeUnit.MEGA_BYTES)
+            .operationTimeout(properties.getOperationTimeoutMs(),TimeUnit.MILLISECONDS)
+            .connectionTimeout(properties.getConnectionTimeoutMs(),TimeUnit.MILLISECONDS);
         });
     }
 

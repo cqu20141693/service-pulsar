@@ -58,8 +58,9 @@ public class PulsarProperties {
         private String jwtToken;
         private String authPluginClassName = null;
         private String authParams = null;
-        private Long operationTimeoutMs = 30000L;
+        private Integer operationTimeoutMs = 5000;
         private Long statsIntervalSeconds = 60L;
+        private Long memoryLimit = 64L;
         private Integer numIoThreads = 1;
         private Integer numListenerThreads = 1;
         private Boolean useTcpNoDelay = true;
@@ -132,7 +133,7 @@ public class PulsarProperties {
         private RegexSubscriptionMode regexSubscriptionMode;
         private Integer receiverQueueSize;
         private Long acknowledgementsGroupTimeMicros;
-        private boolean batchIndexAcknowledgmentEnabled = true;
+        private boolean batchIndexAcknowledgmentEnabled;
         private Long negativeAckRedeliveryDelayMicros;
         private Integer maxTotalReceiverQueueSizeAcrossPartitions;
         private String consumerName;
@@ -157,9 +158,12 @@ public class PulsarProperties {
             this.regexSubscriptionMode = RegexSubscriptionMode.PersistentOnly;
             this.receiverQueueSize = 1000;
             this.acknowledgementsGroupTimeMicros = TimeUnit.MILLISECONDS.toMicros(100L);
+            //当客户端调用negativeAcknowledge时，触发redeliver机制的时间
+            //ackTimeout和negativeAckRedeliveryDelay建议不要同时使用，一般建议使用negativeAck，用户可以有更灵活的控制权
             this.negativeAckRedeliveryDelayMicros = TimeUnit.MINUTES.toMicros(1L);
             this.maxTotalReceiverQueueSizeAcrossPartitions = 50000;
             this.consumerName = null;
+            //当服务端推送消息，但消费者未及时回复 ack 时，经过 ackTimeout 后，会重新推送给消费者处理，即redeliver机制
             this.ackTimeoutMillis = 0L;
             this.tickDurationMillis = 1000L;
             this.priorityLevel = 0;
@@ -174,6 +178,7 @@ public class PulsarProperties {
             this.autoAckOldestChunkedMessageOnQueueFull = true;
             this.expireTimeOfIncompleteChunkedMessageMillis = 3600000L;
             this.enableRetry = false;
+            this.batchIndexAcknowledgmentEnabled = true;
         }
 
     }
@@ -215,9 +220,13 @@ public class PulsarProperties {
         private Integer batchMaxBytes;
         private ProducerAccessMode accessMode;
         private Boolean chunkingEnabled;
+        //自动更新 partition 信息。如topic中partition信息不变则不需要配置，降低集群的消耗。
+        private Boolean autoUpdatePartition = false;
 
         public ProducerProperties() {
-            this.messageRoutingMode = MessageRoutingMode.RoundRobinPartition;
+            //默认为RoundRobinPartition。根据业务需求选择，如果需要保序，
+            // 一般选择SinglePartition，把相同 key 的消息发到同一个partition
+            this.messageRoutingMode = MessageRoutingMode.SinglePartition;
             this.hashingScheme = HashingScheme.JavaStringHash;
             this.cryptoFailureAction = ProducerCryptoFailureAction.FAIL;
             this.batchingMaxPublishDelayMicros = TimeUnit.MILLISECONDS.toMicros(100L);
@@ -228,6 +237,7 @@ public class PulsarProperties {
             this.batchMaxBytes = 83886080;
             this.accessMode = ProducerAccessMode.Shared;
             this.chunkingEnabled = false;
+            this.maxPendingMessages = 1000;
         }
 
     }
